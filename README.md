@@ -17,3 +17,19 @@ This project include:
 - `src/grocery_AppDB.spl` : Creating the tables and attibutes.
 - Infographics
 
+## 🛠️ How to Build, Run, and Visualize
+
+1. **Set MySQL password**
+You need to change the temp password to your MySQL password. The place holder is `CHANGE PASSWORD TO MYSQL`. In the files below you will need to change it on line 8 and 9 respectively.
+
+- `src/main.py`
+- `src/populate_db.py`
+
+2. **Compile and run the project**
+
+```bash
+cd src
+source venv/bin/activate
+python populate_db.py
+python main.py
+```

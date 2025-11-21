@@ -5,7 +5,7 @@ import os
 # --- Database Config ---
 db_config = {
     'user': 'root',
-    'password': 'CHANGE THIS TO YOUR PASSWORD',  # UPDATE THIS if your password is distinct
+    'password': 'CHANGE PASSWORD TO MYSQL',  # UPDATE THIS if your password is distinct
     'host': 'localhost',
     'database': 'grocery_app'
 }
