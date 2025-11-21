@@ -77,8 +77,9 @@ CREATE TABLE vitamin (
 -- 8. Grocery location
 CREATE TABLE grocery_location (
     OBJECTID VARCHAR(36) NOT NULL PRIMARY KEY, 
-    STORENAME VARCHAR(255),                    
-    STORE_ADDRESS VARCHAR(255)
+    STORENAME VARCHAR(255),         
+    STORE_ADDRESS VARCHAR(255),
+    zipcode VARCHAR(10)
 );
 
 -- 9. Grocery List
