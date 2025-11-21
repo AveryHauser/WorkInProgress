@@ -6,7 +6,7 @@ import mysql.connector
 # UPDATE THESE VALUES TO MATCH YOUR LOCAL DATABASE SETUP
 db_config = {
     'user': 'root',          # Replace with your database username
-    'password': 'CHANGE PASSWORD TO MYSQL',  # Replace with your database password
+    'password': 'CHANGE PASSWORD TO MYSQL PASSWORD',  # Replace with your database password
     'host': 'localhost',
     'database': 'grocery_app'
 }

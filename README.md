@@ -20,7 +20,7 @@ This project include:
 ## 🛠️ How to Build, Run, and Visualize
 
 1. **Set MySQL password**
-You need to change the temp password to your MySQL password. The place holder is `CHANGE PASSWORD TO MYSQL`. In the files below you will need to change it on line 8 and 9 respectively.
+You need to change the temp password to your MySQL password. The place holder is `CHANGE PASSWORD TO MYSQL PASSWORD`. In the files below you will need to change it on line 8 and 9 respectively.
 
 - `src/main.py`
 - `src/populate_db.py`
