@@ -21,9 +21,9 @@ class LoginWindow:
         # Center the window
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        x = int(screen_width/2 - 300/2)
-        y = int(screen_height/2 - 200/2)
-        self.root.geometry(f"300x200+{x}+{y}")
+        x = int(screen_width/2 - 800/2)
+        y = int(screen_height/2 - 600/2)
+        self.root.geometry(f"800x600+{x}+{y}")
 
         tk.Label(root, text="Grocery Admin Login", font=("Arial", 14, "bold")).pack(pady=20)
         
@@ -133,7 +133,7 @@ class GroceryApp:
 
         tk.Button(add_frame, text="Add to Database", command=self.add_store, bg="#d9fdd3").grid(row=3, column=1, sticky="e", pady=10)
 
-        # --- Section 2: Add User (YOUR REQUESTED FEATURE) ---
+        # --- Section 2: Add User ---
         user_frame = tk.LabelFrame(self.tab1, text="Add New User", padx=10, pady=10)
         user_frame.pack(fill="x", padx=10, pady=10)
 
