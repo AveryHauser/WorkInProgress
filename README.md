@@ -29,6 +29,11 @@ You need to change the temp password to your MySQL password. The place holder is
 
 ```bash
 cd src
+
+mysql -u root -p
+source Grocery_AppDB.sql
+exit
+
 source venv/bin/activate
 python populate_db.py
 python main.py
