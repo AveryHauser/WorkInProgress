@@ -111,13 +111,17 @@ CREATE TABLE grocery_location (
 
 -- 12. Market Price (Matches 'Vegetable-Prices-2022.csv' & PPI Data)
 -- Tracks general market prices (not specific to one store)
-CREATE TABLE market_price (
-    price_id VARCHAR(36) NOT NULL PRIMARY KEY,
-    Food_Item_ID VARCHAR(36),
-    price_per_unit DECIMAL(10,2),
-    unit_type VARCHAR(50), -- e.g., 'per pound'
-    data_year INT, -- e.g., 2022
-    FOREIGN KEY (Food_Item_ID) REFERENCES food(Food_Item_ID) ON DELETE SET NULL
+-- 12. Market Price (NEW)
+-- 11. User Review (NEW)
+CREATE TABLE IF NOT EXISTS user_review (
+    review_id VARCHAR(36) NOT NULL PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    store_id VARCHAR(36) NOT NULL,
+    rating INT,
+    comment TEXT,
+    created_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (store_id) REFERENCES grocery_location(OBJECTID) ON DELETE CASCADE
 );
 
 -- 13. Store Product (Links Food to a specific Grocery Location)
