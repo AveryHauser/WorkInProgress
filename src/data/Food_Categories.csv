@@ -1,0 +1,32 @@
+Action,Category_Name,Category_ID,Active
+,All Foods,-1,1
+,My Favorite Foods,0,1
+,Beverages,1,1
+,"Breads, Cereals & Bakery Items",2,1
+,Pasta & Rice,3,1
+,Fruits,4,1
+,Vegetables,5,1
+,Dairy,6,1
+,"Meat, Poultry, Fish & Eggs",7,1
+,Meals & Entrees (Mixed Dishes),8,1
+,Snacks,9,1
+,Condiments & Sauces,10,1
+,Fast Foods,11,1
+,Sweets & Desserts,12,1
+,Recipe Ingredients,13,1
+,Recipes,99,1
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
