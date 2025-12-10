@@ -115,6 +115,24 @@ class GroceryApp:
         self.tree.column("zip", width=80)
         self.tree.pack(fill="x", pady=5)
 
+        add_frame = tk.LabelFrame(self.tab1, text="Add New Store (Write Data)", padx=10, pady=10)
+        add_frame.pack(fill="x", padx=10, pady=10)
+
+        # Form
+        tk.Label(add_frame, text="Store Name:").grid(row=0, column=0, sticky="e")
+        self.new_name = tk.Entry(add_frame, width=30)
+        self.new_name.grid(row=0, column=1, padx=5, pady=2)
+
+        tk.Label(add_frame, text="Address:").grid(row=1, column=0, sticky="e")
+        self.new_addr = tk.Entry(add_frame, width=30)
+        self.new_addr.grid(row=1, column=1, padx=5, pady=2)
+
+        tk.Label(add_frame, text="Zip Code:").grid(row=2, column=0, sticky="e")
+        self.new_zip = tk.Entry(add_frame, width=10)
+        self.new_zip.grid(row=2, column=1, sticky="w", padx=5, pady=2)
+
+        tk.Button(add_frame, text="Add to Database", command=self.add_store, bg="#d9fdd3").grid(row=3, column=1, sticky="e", pady=10)
+
         # --- Section 2: Add User (YOUR REQUESTED FEATURE) ---
         user_frame = tk.LabelFrame(self.tab1, text="Add New User", padx=10, pady=10)
         user_frame.pack(fill="x", padx=10, pady=10)
@@ -145,6 +163,34 @@ class GroceryApp:
                 self.tree.insert("", tk.END, values=row)
         except mysql.connector.Error as err:
             messagebox.showerror("Error", str(err))
+    
+    def add_store(self):
+        if not self.cursor: return
+        name = self.new_name.get()
+        addr = self.new_addr.get()
+        zip_c = self.new_zip.get()
+
+        if not name or not zip_c:
+            messagebox.showwarning("Missing Data", "Name and Zip Code are required.")
+            return
+
+        try:
+            obj_id = str(uuid.uuid4())
+            sql = "INSERT INTO grocery_location (OBJECTID, STORENAME, STORE_ADDRESS, zipcode) VALUES (%s, %s, %s, %s)"
+            self.cursor.execute(sql, (obj_id, name, addr, zip_c))
+            self.conn.commit()
+            messagebox.showinfo("Success", "Store added successfully!")
+            
+            # Clear fields
+            self.new_name.delete(0, tk.END)
+            self.new_addr.delete(0, tk.END)
+            self.new_zip.delete(0, tk.END)
+            
+            # Refresh Analytics
+            self.refresh_analytics()
+            
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Error", str(err))
 
     def add_user(self):
         """Adds a new user to the database with a unique ID."""
