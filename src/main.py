@@ -21,9 +21,9 @@ class LoginWindow:
         # Center the window
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        x = int(screen_width/2 - 300/2)
-        y = int(screen_height/2 - 200/2)
-        self.root.geometry(f"300x200+{x}+{y}")
+        x = int(screen_width/2 - 800/2)
+        y = int(screen_height/2 - 600/2)
+        self.root.geometry(f"800x600+{x}+{y}")
 
         tk.Label(root, text="Grocery Admin Login", font=("Arial", 14, "bold")).pack(pady=20)
         
@@ -133,7 +133,7 @@ class GroceryApp:
 
         tk.Button(add_frame, text="Add to Database", command=self.add_store, bg="#d9fdd3").grid(row=3, column=1, sticky="e", pady=10)
 
-        # --- Section 2: Add User (YOUR REQUESTED FEATURE) ---
+        # --- Section 2: Add User ---
         user_frame = tk.LabelFrame(self.tab1, text="Add New User", padx=10, pady=10)
         user_frame.pack(fill="x", padx=10, pady=10)
 
@@ -306,22 +306,22 @@ class GroceryApp:
         self.canvas.delete("all")
         self.draw_summary_stats(50, 50)
         self.draw_top_zips_chart(50, 200)
+        self.draw_top_brands_chart(400, 200)
 
     def draw_summary_stats(self, x, y):
         try:
             self.cursor.execute("SELECT COUNT(*) FROM grocery_location")
             total_stores = self.cursor.fetchone()[0]
-            
-            self.cursor.execute("SELECT COUNT(*) FROM user")
-            total_users = self.cursor.fetchone()[0]
+            self.cursor.execute("SELECT COUNT(DISTINCT zipcode) FROM grocery_location")
+            total_zips = self.cursor.fetchone()[0]
 
-            self.canvas.create_text(x, y, text="Database Overview", font=("Arial", 12, "bold"), anchor="w")
-            self.canvas.create_text(x, y+30, text=f"Total Stores: {total_stores}", anchor="w", fill="blue")
-            self.canvas.create_text(x, y+50, text=f"Total Users: {total_users}", anchor="w", fill="green")
+            self.canvas.create_text(x, y, text="View 1: Database Summary", font=("Arial", 12, "bold"), anchor="w")
+            self.canvas.create_text(x, y+30, text=f"Total Stores Tracked: {total_stores}", anchor="w", fill="blue")
+            self.canvas.create_text(x, y+50, text=f"Total Zip Codes Covered: {total_zips}", anchor="w", fill="green")
         except: pass
 
     def draw_top_zips_chart(self, x, y):
-        self.canvas.create_text(x, y, text="Top Zip Codes (Store Count)", font=("Arial", 11, "bold"), anchor="w")
+        self.canvas.create_text(x, y, text="View 2: Top 3 Zip Codes (Density)", font=("Arial", 11, "bold"), anchor="w")
         try:
             sql = "SELECT zipcode, COUNT(*) as cnt FROM grocery_location GROUP BY zipcode ORDER BY cnt DESC LIMIT 3"
             self.cursor.execute(sql)
@@ -334,6 +334,26 @@ class GroceryApp:
                     bar_w = (count / max_val) * max_width if max_val > 0 else 0
                     self.canvas.create_rectangle(x, start_y, x + bar_w, start_y + 20, fill="#69b3a2", outline="white")
                     self.canvas.create_text(x + bar_w + 5, start_y + 10, text=f"{zip_c} ({count})", anchor="w")
+                    start_y += 30
+            else:
+                self.canvas.create_text(x, start_y, text="No Data Available", anchor="w")
+        except: pass
+
+    def draw_top_brands_chart(self, x, y):
+        self.canvas.create_text(x, y, text="View 3: Top 3 Store Brands", font=("Arial", 11, "bold"), anchor="w")
+        try:
+            sql = "SELECT STORENAME, COUNT(*) as cnt FROM grocery_location GROUP BY STORENAME ORDER BY cnt DESC LIMIT 3"
+            self.cursor.execute(sql)
+            rows = self.cursor.fetchall()
+            start_y = y + 30
+            max_width = 200
+            if rows:
+                max_val = rows[0][1]
+                for i, (name, count) in enumerate(rows):
+                    bar_w = (count / max_val) * max_width if max_val > 0 else 0
+                    self.canvas.create_rectangle(x, start_y, x + bar_w, start_y + 20, fill="#ff9f43", outline="white")
+                    disp_name = (name[:15] + '..') if len(name) > 15 else name
+                    self.canvas.create_text(x + bar_w + 5, start_y + 10, text=f"{disp_name} ({count})", anchor="w")
                     start_y += 30
             else:
                 self.canvas.create_text(x, start_y, text="No Data Available", anchor="w")
