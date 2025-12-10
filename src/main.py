@@ -207,6 +207,7 @@ class GroceryApp:
             messagebox.showwarning("Input Error", "Please enter a password.")
             return
 
+<<<<<<< HEAD
         # Clear previous results
         for item in self.tree.get_children():
             self.tree.delete(item)
@@ -215,6 +216,25 @@ class GroceryApp:
             self.cursor.execute("INSERT INTO user (email, password_hash, created_at, stat) VALUES (%s, %s, %s, %s)", (email_input, password_input, datetime.datetime.now(), "Active"))
         except mysql.connector.Error as err:
             messagebox.showerror("Query Error", f"Error searching database:\n{err}")
+=======
+        try:
+            # 1. Generate unique ID (Fixes the issue of hardcoding '1')
+            user_id = str(uuid.uuid4())
+            current_time = datetime.now()
+
+            # 2. Insert Query
+            sql = "INSERT INTO user (user_id, email, password_hash, created_at, stat) VALUES (%s, %s, %s, %s, %s)"
+            self.cursor.execute(sql, (user_id, email_input, password_input, current_time, "Active"))
+            
+            # 3. Commit (Required to save data)
+            self.conn.commit()
+
+            messagebox.showinfo("Success", "User added successfully!")
+            
+            # Clear fields
+            self.email_entry.delete(0, tk.END)
+            self.password_entry.delete(0, tk.END)
+>>>>>>> 77746817fd62e976184ae2f82d143b129b2a8349
 
     def del_user(self):
         if not self.cursor: return
