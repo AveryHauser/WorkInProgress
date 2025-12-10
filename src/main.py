@@ -13,9 +13,10 @@ db_config = {
 }
 
 class LoginWindow:
-    def __init__(self, root, on_success_callback):
+    def __init__(self, root, on_success_callback, db_config):
         self.root = root
         self.on_success = on_success_callback
+        self.db_config = db_config
         self.root.title("System Login")
         
         # Center the window
@@ -43,12 +44,31 @@ class LoginWindow:
         tk.Button(root, text="Login", command=self.check_login, bg="#dddddd").pack(pady=15)
 
     def check_login(self):
-        # Temp hardcoded password logic
-        if self.user_entry.get() == "admin" and self.pass_entry.get() == "1234":
+
+        conn = mysql.connector.connect(**self.db_config)
+        self.cursor = conn.cursor()
+        username = self.user_entry.get()
+        password = self.pass_entry.get()
+
+      #  self.cursor.execute("SELECT user_id FROM user WHERE username = '"+username+"' AND password = '"+password+"'")
+       # id = self.cursor.fetchone()
+
+        query = "SELECT user_id FROM user WHERE username = %s AND password = %s"
+        cursor.execute(query, (username, password))
+
+        result = cursor.fecthone()
+
+        if result:
             self.root.destroy()
             self.on_success()
         else:
             messagebox.showerror("Login Failed", "Invalid Username or Password")
+
+     #   if self.user_entry.get() == "admin" and self.pass_entry.get() == "1234":
+      #      self.root.destroy()
+       #     self.on_success()
+        #else:
+         #   messagebox.showerror("Login Failed", "Invalid Username or Password")
 
 class GroceryApp:
     def __init__(self, root, db_config):
@@ -513,6 +533,6 @@ if __name__ == "__main__":
 
     main_root.withdraw() 
     login_window = tk.Toplevel(main_root)
-    login = LoginWindow(login_window, launch_app)
+    login = LoginWindow(login_window, launch_app, db_config)
     
     main_root.mainloop()
