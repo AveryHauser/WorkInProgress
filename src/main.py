@@ -6,7 +6,7 @@ import mysql.connector
 # UPDATE THESE VALUES TO MATCH YOUR LOCAL DATABASE SETUP
 db_config = {
     'user': 'root',          # Replace with your database username
-    'password': 'MymysqlPass123',  # Replace with your database password
+    'password': '',  # Replace with your database password
     'host': 'localhost',
     'database': 'grocery_app'
 }
@@ -144,17 +144,65 @@ class GroceryApp:
             return
 
         # Clear previous results
-     #   for item in self.tree.get_children():
-      #      self.tree.delete(item)
+        for item in self.tree.get_children():
+            self.tree.delete(item)
 
         try:
-            self.cursor.execute("INSERT INTO user (user_id, email, password_hash, created_at, stat) VALUES (%s, %s, %s, %s, %s)", (1, email_input, password_input, datetime.datetime.now(), "Active"))
-            # NEED TO MAKE ID NOT ONE
-            
-            #SELECT STORENAME, STORE_ADDRESS FROM grocery_location WHERE zipcode = %s"
-            self.cursor.execute(query, (zip_input,))
-            rows = self.cursor.fetchall()
+            self.cursor.execute("INSERT INTO user (email, password_hash, created_at, stat) VALUES (%s, %s, %s, %s)", (email_input, password_input, datetime.datetime.now(), "Active"))
+        except mysql.connector.Error as err:
+            messagebox.showerror("Query Error", f"Error searching database:\n{err}")
 
+    def del_user(self):
+        if not self.cursor: return
+
+        email_input = self.email_entry.get().strip()        # CHECK EMAIL ENTRY
+        
+        if not email_input:
+            messagebox.showwarning("Input Error", "Please enter an email.")
+            return
+
+        password_input = self.password_entry.get().strip()        # CHECK PASSWORD ENTRY
+        
+        if not password_input:
+            messagebox.showwarning("Input Error", "Please enter a password.")
+            return
+
+        # Clear previous results
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        try:
+            self.cursor.execute("DELETE FROM user WHERE email = '"+email_input+"' AND password_hash = '"+password_input+"'")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Query Error", f"Error searching database:\n{err}")
+
+    def change_email(self):
+        if not self.cursor: return
+
+        old_email_input = self.email_entry.get().strip()        # CHECK EMAIL ENTRY
+        
+        if not old_email_input:
+            messagebox.showwarning("Input Error", "Please enter an email.")
+            return
+
+        password_input = self.password_entry.get().strip()        # CHECK PASSWORD ENTRY
+        
+        if not password_input:
+            messagebox.showwarning("Input Error", "Please enter a password.")
+            return
+
+        new_email_input = self.email_entry.get().strip()        # CHECK EMAIL ENTRY
+        
+        if not new_email_input:
+            messagebox.showwarning("Input Error", "Please enter an email.")
+            return
+
+        # Clear previous results
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        try:
+            self.cursor.execute("UPDATE user SET email = '"+new_email_input+"' WHERE email = '"+old_email_input+"' AND password_hash = '"+password_input+"'")
         except mysql.connector.Error as err:
             messagebox.showerror("Query Error", f"Error searching database:\n{err}")
 
