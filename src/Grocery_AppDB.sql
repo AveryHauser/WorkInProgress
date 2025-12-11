@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS grocery_list;
 DROP TABLE IF EXISTS food;
 DROP TABLE IF EXISTS category;
 DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS log;
 
 SET foreign_key_checks = 1;
 
@@ -229,4 +230,11 @@ CREATE TABLE county_health_data (
     County VARCHAR(100),
     Variable_Code VARCHAR(50), 
     Value DECIMAL(15, 4)      
+);
+
+-- 21. Log
+CREATE TABLE log (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    action VARCHAR(50),
+    time_completed DATETIME DEFAULT CURRENT_TIMESTAMP
 );
