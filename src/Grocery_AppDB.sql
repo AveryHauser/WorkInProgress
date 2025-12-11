@@ -235,6 +235,6 @@ CREATE TABLE county_health_data (
 -- 21. Log
 CREATE TABLE log (
     log_id INT AUTO_INCREMENT PRIMARY KEY,
-    action VARCHAR(50),
+    action VARCHAR(200),
     time_completed DATETIME DEFAULT CURRENT_TIMESTAMP
 );

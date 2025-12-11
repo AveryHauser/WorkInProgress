@@ -143,6 +143,17 @@ class GroceryApp:
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Could not connect:\n{err}")
             return None
+    
+    def log_action(self, action_text):
+        if not self.cursor: return
+        try:
+            sql = "INSERT INTO log (action, time_completed) VALUES (%s, %s)"
+            
+            self.cursor.execute(sql, (action_text, datetime.now()))
+            self.conn.commit()
+            print(f"Logged action: {action_text}") 
+        except mysql.connector.Error as err:
+            print(f"Failed to log action: {err}")
 
     # --- TAB 1: DATA MANAGEMENT ---
     def setup_data_tab(self):
@@ -212,23 +223,50 @@ class GroceryApp:
     def add_store(self):
         if not self.cursor: return
         try:
-            obj_id = str(uuid.uuid4())
-            self.cursor.execute("INSERT INTO grocery_location (OBJECTID, STORENAME, STORE_ADDRESS, zipcode) VALUES (%s, %s, %s, %s)", 
-                                (obj_id, self.new_name.get(), self.new_addr.get(), self.new_zip.get()))
-            self.conn.commit()
+            sql = "INSERT INTO grocery_location (STORENAME, STORE_ADDRESS, zipcode) VALUES (%s, %s, %s)"
+            self.cursor.execute(sql, (self.new_name.get(), self.new_addr.get(), self.new_zip.get()))           
+            self.conn.commit()          
+            self.log_action(f"Added new store: {self.new_name.get()}")
             messagebox.showinfo("Success", "Store added!")
-            self.refresh_analytics()
+            self.refresh_analytics()       
         except Exception as e: messagebox.showerror("Error", str(e))
 
     def add_user(self):
+        # 1. Get input
+        email = self.email_entry.get().strip()
+        password = self.password_entry.get().strip() # Note: renamed to match your code
+        
+        if not email or not password:
+            messagebox.showwarning("Input Error", "Please enter an email and password.")
+            return
+
         if not self.cursor: return
         try:
-            uid = str(uuid.uuid4())
-            self.cursor.execute("INSERT INTO user (user_id, email, password_hash, created_at, stat) VALUES (%s, %s, %s, %s, %s)", 
-                                (uid, self.email_entry.get(), self.password_entry.get(), datetime.now(), "Active"))
+            # 2. Check if email exists
+            self.cursor.execute("SELECT user_id FROM user WHERE email = %s", (email,))
+            if self.cursor.fetchone():
+                messagebox.showerror("Error", "User already exists.")
+                return
+
+            # 3. Insert NEW user (Let MySQL generate user_id automatically)
+            # REMOVED: uid = str(uuid.uuid4()) 
+            # REMOVED: user_id from the INSERT columns
+            
+            sql = "INSERT INTO user (email, password_hash, created_at, stat) VALUES (%s, %s, %s, %s)"
+            self.cursor.execute(sql, (email, password, datetime.now(), "Active"))
+            
             self.conn.commit()
+            
+            # 4. Log and notify
+            self.log_action(f"Added new user: {email}")
             messagebox.showinfo("Success", "User created!")
-        except Exception as e: messagebox.showerror("Error", str(e))
+            
+            # Clear inputs
+            self.email_entry.delete(0, tk.END)
+            self.password_entry.delete(0, tk.END)
+
+        except Exception as e: 
+            messagebox.showerror("Error", str(e))
 
     def del_user(self):
         if not self.cursor: return
@@ -237,6 +275,7 @@ class GroceryApp:
                                 (self.email_entry.get(), self.password_entry.get()))
             if self.cursor.rowcount > 0:
                 self.conn.commit()
+                self.log_action(f" delete user: {self.email_entry.get()}")
                 messagebox.showinfo("Success", "User deleted.")
             else:
                 messagebox.showwarning("Failed", "Incorrect credentials.")
@@ -244,18 +283,37 @@ class GroceryApp:
 
     def change_email(self):
         if not self.cursor: return
-        new_email = simpledialog.askstring("Update", "New Email:")
-        if new_email:
-            try:
-                self.cursor.execute("UPDATE user SET email = %s WHERE email = %s AND password_hash = %s",
-                                    (new_email, self.email_entry.get(), self.password_entry.get()))
-                if self.cursor.rowcount > 0:
-                    self.conn.commit()
-                    messagebox.showinfo("Success", "Email updated.")
-                else:
-                    messagebox.showwarning("Failed", "Incorrect credentials.")
-            except Exception as e: messagebox.showerror("Error", str(e))
+        
+        # 1. Get the CURRENT credentials from the main window text boxes
+        current_email = self.email_entry.get().strip()
+        current_password = self.password_entry.get().strip()
 
+        if not current_email or not current_password:
+            messagebox.showwarning("Error", "Enter your CURRENT email and password in the boxes first.")
+            return
+
+        # 2. Ask for the NEW email via Popup
+        new_email = simpledialog.askstring("Update", "New Email:")
+        if not new_email: return # User cancelled
+        
+        try:
+            # 3. Update the database
+            # We look for a user that matches the CURRENT email/pass, and set their email to the NEW one.
+            sql = "UPDATE user SET email = %s WHERE email = %s AND password_hash = %s"
+            self.cursor.execute(sql, (new_email, current_email, current_password))
+            
+            if self.cursor.rowcount > 0:
+                self.conn.commit()
+                self.log_action(f"Changed email from {current_email} to {new_email}")
+                messagebox.showinfo("Success", "Email updated successfully.")
+                
+                # Update the text box to show the new email automatically
+                self.email_entry.delete(0, tk.END)
+                self.email_entry.insert(0, new_email)
+            else:
+                messagebox.showwarning("Failed", "User not found. Did you click 'Create' first?")
+                
+        except Exception as e: messagebox.showerror("Error", str(e))
     # --- TAB 2: FOOD DATABASE ---
     def setup_food_tab(self):
         top_frame = tk.Frame(self.tab2)
@@ -290,15 +348,23 @@ class GroceryApp:
             self.cursor.execute(sql, (f"%{self.food_search_entry.get()}%",))
             for row in self.cursor.fetchall(): self.food_tree.insert("", tk.END, values=row)
         except Exception as e: messagebox.showerror("Error", str(e))
-
     def edit_food(self):
         sel = self.food_tree.selection()
         if not sel: return
+        
+        # Get the item data
         item = self.food_tree.item(sel[0])
-        new_val = simpledialog.askfloat("Edit", f"New Calories for {item['values'][1]}:")
+        food_id = item['values'][0]
+        food_name = item['values'][1]  
+        
+        new_val = simpledialog.askfloat("Edit", f"New Calories for {food_name}:")
+        
         if new_val is not None:
-            self.cursor.execute("UPDATE nutrition SET Energy_kcal = %s WHERE Food_Item_ID = %s", (new_val, item['values'][0]))
+            self.cursor.execute("UPDATE nutrition SET Energy_kcal = %s WHERE Food_Item_ID = %s", (new_val, food_id))
             self.conn.commit()
+            
+            self.log_action(f"Updated calories for {food_name} to {new_val}")
+            
             self.search_food()
             self.refresh_analytics()
 
@@ -339,6 +405,7 @@ class GroceryApp:
 
     def refresh_analytics(self):
         if not self.cursor: return
+        self.conn.commit()
         self.canvas.delete("all")
         
         pad = 20
@@ -418,34 +485,54 @@ class GroceryApp:
 
     def draw_cal_bar(self, x, y):
         cx, cy, cw, ch = self.draw_card(x, y, 500, 300, "Highest Calorie Categories")
-        try:
-            sql = """
-                SELECT c.Category_Name, AVG(n.Energy_kcal) as avg_cal
-                FROM food f
-                JOIN nutrition n ON f.Food_Item_ID = n.Food_Item_ID
-                JOIN category c ON f.Category_ID = c.Category_ID
-                GROUP BY c.Category_Name
-                ORDER BY avg_cal DESC
-                LIMIT 5
-            """
-            self.cursor.execute(sql)
-            rows = self.cursor.fetchall()
-            if not rows: return
+        
+        # 1. Ensure we are reading fresh data
+        self.conn.commit()
+        
+        # REMOVED: try/except block so we can see errors!
+        sql = """
+            SELECT c.Category_Name, AVG(n.Energy_kcal) as avg_cal
+            FROM food f
+            JOIN nutrition n ON f.Food_Item_ID = n.Food_Item_ID
+            JOIN category c ON f.Category_ID = c.Category_ID
+            GROUP BY c.Category_Name
+            ORDER BY avg_cal DESC
+            LIMIT 5
+        """
+        self.cursor.execute(sql)
+        rows = self.cursor.fetchall()
+        
+        if not rows: 
+            print("Debug: No data returned for chart.")
+            return
+        
+        # 2. Print data to console to verify the DB update worked
+        print("\n--- ANALYTICS DEBUG DATA ---")
+        for r in rows:
+            print(f"Category: {r[0]} | Avg Cal: {r[1]}")
+        print("----------------------------\n")
+        
+        # Handle 'Decimal' types if MySQL returns them
+        max_val = float(rows[0][1]) 
+        
+        bar_width = 40
+        gap = 40
+        start_x = cx + 30
+        baseline_y = cy + 200
+        
+        for name, avg in rows:
+            val = float(avg) # Ensure it is a float
+            if max_val > 0:
+                bar_height = (val / max_val) * 180
+            else:
+                bar_height = 0
+                
+            self.canvas.create_rectangle(start_x, baseline_y - bar_height, start_x + bar_width, baseline_y, fill="#e67e22", outline="")
+            self.canvas.create_text(start_x + bar_width/2, baseline_y - bar_height - 10, text=str(int(val)), font=("Arial", 9, "bold"))
             
-            max_val = rows[0][1]
-            bar_width = 40
-            gap = 40
-            start_x = cx + 30
-            baseline_y = cy + 200
-            
-            for name, avg in rows:
-                bar_height = (avg / max_val) * 180
-                self.canvas.create_rectangle(start_x, baseline_y - bar_height, start_x + bar_width, baseline_y, fill="#e67e22", outline="")
-                self.canvas.create_text(start_x + bar_width/2, baseline_y - bar_height - 10, text=str(int(avg)), font=("Arial", 9, "bold"))
-                label = name[:8] + ".." if len(name) > 8 else name
-                self.canvas.create_text(start_x + bar_width/2, baseline_y + 15, text=label, font=("Arial", 8))
-                start_x += bar_width + gap
-        except: pass
+            label = name[:8] + ".." if len(name) > 8 else name
+            self.canvas.create_text(start_x + bar_width/2, baseline_y + 15, text=label, font=("Arial", 8))
+            start_x += bar_width + gap
 
 if __name__ == "__main__":
     main_root = tk.Tk()

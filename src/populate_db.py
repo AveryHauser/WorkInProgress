@@ -39,11 +39,11 @@ def setup_database(cursor):
     
     # 1. Drop Tables to Start Fresh (Order matters for Foreign Keys)
     tables = [
-        "user_review", "market_price", "grocery_list_item", "grocery_list", 
+        "log", "user_review", "market_price", "grocery_list_item", "grocery_list", 
         "pantry", "recipe_ingredient", "recipe", "store_product", 
         "food_dietary_map", "dietary_tag", "mineral", "vitamin", "nutrition", 
         "food", "category", "session", "user_profile", "user", 
-        "grocery_location", "county_health_data"
+        "grocery_location", "county_health_data",
     ]
     cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
     for t in tables:
@@ -301,6 +301,16 @@ def populate_users_and_reviews(cursor):
     else:
         print("  -> guest user already exists.")
 
+def populate_logs(cursor):
+    print("Populating Logs...")
+    try:
+        # Generate one initial entry
+        sql = "INSERT INTO log (action, time_completed) VALUES (%s, %s)"
+        cursor.execute(sql, ("System: Database Repopulated", datetime.now()))
+        print("  -> Added initial system log entry.")
+    except Exception as e:
+        print(f"  [!] Could not populate log: {e}")
+
 def main():
     conn = get_db_connection()
     if not conn: return
@@ -314,6 +324,7 @@ def main():
         populate_market_prices(cursor)
         populate_county_data(cursor)
         populate_users_and_reviews(cursor)
+        populate_logs(cursor)
 
         conn.commit()
         print("\n--- Database Population Complete ---")
