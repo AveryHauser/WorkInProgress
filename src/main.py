@@ -43,6 +43,46 @@ class LoginWindow:
 
         tk.Button(root, text="Login", command=self.check_login, bg="#dddddd").pack(pady=15)
 
+
+        # Create Username
+        tk.Frame(root).pack(pady=5)
+        tk.Label(root, text="New User:").pack()
+        self.user_entry = tk.Entry(root)
+        self.user_entry.insert(0, "admin")
+        self.user_entry.pack()
+
+        # Create Password
+        tk.Label(root, text="Create Password:").pack()
+        self.pass_entry = tk.Entry(root, show="*")
+        self.pass_entry.insert(0, "1234") # Temp password
+        self.pass_entry.pack()
+
+        tk.Button(root, text="Create", command=self.add_user, bg="#d9fdd3").pack()
+
+    def add_user(self):
+        conn = mysql.connector.connect(**self.db_config)
+        self.cursor = conn.cursor()
+
+        email_input = self.email_entry.get().strip()
+        password_input = self.password_entry.get().strip()
+        
+        if not email_input:
+            messagebox.showwarning("Input Error", "Please enter an email.")
+            return
+
+        if not password_input:
+            messagebox.showwarning("Input Error", "Please enter a password.")
+            return
+
+        # Clear previous results
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        try:
+            self.cursor.execute("INSERT INTO user (email, password_hash, created_at, stat) VALUES (%s, %s, %s, %s)", (email_input, password_input, datetime.datetime.now(), "Active"))
+        except mysql.connector.Error as err:
+            messagebox.showerror("Query Error", f"Error searching database:\n{err}")
+
     def check_login(self):
 
         conn = mysql.connector.connect(**self.db_config)
@@ -174,7 +214,6 @@ class GroceryApp:
         btn_frame = tk.Frame(user_frame)
         btn_frame.grid(row=2, column=1, sticky="e", pady=10)
         
-        tk.Button(btn_frame, text="Create", command=self.add_user, bg="#d9fdd3").pack(side=tk.LEFT, padx=2)
         tk.Button(btn_frame, text="Update Email", command=self.change_email, bg="#fff9c4").pack(side=tk.LEFT, padx=2)
         tk.Button(btn_frame, text="Delete", command=self.del_user, bg="#ffcccb").pack(side=tk.LEFT, padx=2)
 
@@ -222,30 +261,6 @@ class GroceryApp:
             
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", str(err))
-
-    def add_user(self):
-        """Adds a new user to the database with a unique ID."""
-        if not self.cursor: return
-
-        email_input = self.email_entry.get().strip()
-        password_input = self.password_entry.get().strip()
-        
-        if not email_input:
-            messagebox.showwarning("Input Error", "Please enter an email.")
-            return
-
-        if not password_input:
-            messagebox.showwarning("Input Error", "Please enter a password.")
-            return
-
-        # Clear previous results
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-
-        try:
-            self.cursor.execute("INSERT INTO user (email, password_hash, created_at, stat) VALUES (%s, %s, %s, %s)", (email_input, password_input, datetime.datetime.now(), "Active"))
-        except mysql.connector.Error as err:
-            messagebox.showerror("Query Error", f"Error searching database:\n{err}")
 
     def del_user(self):
         if not self.cursor: return
@@ -536,3 +551,4 @@ if __name__ == "__main__":
     login = LoginWindow(login_window, launch_app, db_config)
     
     main_root.mainloop()
+
