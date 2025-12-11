@@ -3,10 +3,8 @@
 This project is a Grocery Application for a database project. The app allows user to view food items, nutritional information, the cost of those items, and nearby grocery stores enabling them to plan their grocery trips. There will also be functionality to make grocery lists and budgets. It uses public data bases for the data used. 
 
 ## Video Runthrough
-<video controls width="100%">
-    <source src="GroceryGUI-FinalCheckPoint.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-</video>
+![Video Demonstration](./GroceryGUI-FinalCheckPoint.mp4)
+Embed does not work on github, please go directly to the file
 
 This project has data from the following sources.
 
