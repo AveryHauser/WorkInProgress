@@ -34,13 +34,13 @@ class LoginWindow:
         tk.Frame(root).pack(pady=5)
         tk.Label(root, text="User:").pack()
         self.user_entry = tk.Entry(root)
-        self.user_entry.insert(0, "admin")
+        self.user_entry.insert(0, "")
         self.user_entry.pack()
 
         # Password
         tk.Label(root, text="Password:").pack()
         self.pass_entry = tk.Entry(root, show="*")
-        self.pass_entry.insert(0, "1234") 
+        self.pass_entry.insert(0, "") 
         self.pass_entry.pack()
 
         tk.Button(root, text="Login", command=self.check_login, bg="#dddddd").pack(pady=15)
@@ -50,13 +50,13 @@ class LoginWindow:
         tk.Frame(root).pack(pady=5)
         tk.Label(root, text="New User:").pack()
         self.user_entry = tk.Entry(root)
-        self.user_entry.insert(0, "admin")
+        self.user_entry.insert(0, "")
         self.user_entry.pack()
 
         # Create Password
         tk.Label(root, text="Create Password:").pack()
         self.pass_entry = tk.Entry(root, show="*")
-        self.pass_entry.insert(0, "1234") # Temp password
+        self.pass_entry.insert(0, "") # Temp password
         self.pass_entry.pack()
 
         tk.Button(root, text="Create", command=self.add_user, bg="#d9fdd3").pack()
@@ -96,7 +96,7 @@ class LoginWindow:
        # id = self.cursor.fetchone()
 
         query = "SELECT user_id FROM user WHERE username = %s AND password = %s"
-        cursor.execute(query, (username, password))
+        self.cursor.execute(query, (username, password))
 
         result = cursor.fecthone()
 
