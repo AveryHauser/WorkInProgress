@@ -6,8 +6,8 @@ from datetime import datetime
 
 # --- Database Configuration ---
 db_config = {
-    'user': 'root',
-    'password': 'password',  # <--- UPDATE THIS
+    'user': 'root',          # Replace with your database username (or keep as root, default)
+    'password': 'password',  # Replace with your database password
     'host': 'localhost',
     'database': 'grocery_app'
 }
@@ -43,6 +43,7 @@ class LoginWindow:
         self.pass_entry.insert(0, "") 
         self.pass_entry.pack()
 
+        # click to log into the application
         tk.Button(root, text="Login", command=self.check_login, bg="#dddddd").pack(pady=15)
 
 
@@ -59,8 +60,10 @@ class LoginWindow:
         self.pass_entry.insert(0, "") # Temp password
         self.pass_entry.pack()
 
+        # create a user, will still have to log in
         tk.Button(root, text="Create", command=self.add_user, bg="#d9fdd3").pack()
 
+    # adds the new user to the database
     def add_user(self):
         conn = mysql.connector.connect(**self.db_config)
         self.cursor = conn.cursor()
@@ -85,6 +88,7 @@ class LoginWindow:
         except mysql.connector.Error as err:
             messagebox.showerror("Query Error", f"Error searching database:\n{err}")
 
+    # 
     def check_login(self):
 
         conn = mysql.connector.connect(**self.db_config)
