@@ -7,7 +7,7 @@ from datetime import datetime
 # --- Database Config ---
 db_config = {
     'user': 'root',
-    'password': 'password',  # <--- UPDATE THIS
+    'password': 'CHANGE PASSWORD TO MYSQL PASSWORD',  # <--- UPDATE THIS
     'host': 'localhost',
     'database': 'grocery_app'
 }
