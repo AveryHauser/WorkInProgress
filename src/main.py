@@ -6,7 +6,7 @@ from datetime import datetime
 
 # --- Database Configuration ---
 db_config = {
-    'user': 'root',          # Replace with your database username
+    'user': 'root',          # Replace with your database username (or keep as root, default)
     'password': 'password',  # Replace with your database password
     'host': 'localhost',
     'database': 'grocery_app'
@@ -20,11 +20,13 @@ class LoginWindow:
         self.root.title("System Login")
         
         # Center the window
+        window_width = 1200
+        window_height = 900
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        x = int(screen_width/2 - 800/2)
-        y = int(screen_height/2 - 600/2)
-        self.root.geometry(f"800x600+{x}+{y}")
+        x = int(screen_width / 2 - window_width / 2)
+        y = int(screen_height / 2 - window_height / 2)
+        self.root.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
         tk.Label(root, text="Grocery Admin Login", font=("Arial", 14, "bold")).pack(pady=20)
         
@@ -32,15 +34,16 @@ class LoginWindow:
         tk.Frame(root).pack(pady=5)
         tk.Label(root, text="User:").pack()
         self.user_entry = tk.Entry(root)
-        self.user_entry.insert(0, "admin")
+        self.user_entry.insert(0, "")
         self.user_entry.pack()
 
         # Password
         tk.Label(root, text="Password:").pack()
         self.pass_entry = tk.Entry(root, show="*")
-        self.pass_entry.insert(0, "1234") # Temp password
+        self.pass_entry.insert(0, "") 
         self.pass_entry.pack()
 
+        # click to log into the application
         tk.Button(root, text="Login", command=self.check_login, bg="#dddddd").pack(pady=15)
 
 
@@ -48,17 +51,19 @@ class LoginWindow:
         tk.Frame(root).pack(pady=5)
         tk.Label(root, text="New User:").pack()
         self.user_entry = tk.Entry(root)
-        self.user_entry.insert(0, "admin")
+        self.user_entry.insert(0, "")
         self.user_entry.pack()
 
         # Create Password
         tk.Label(root, text="Create Password:").pack()
         self.pass_entry = tk.Entry(root, show="*")
-        self.pass_entry.insert(0, "1234") # Temp password
+        self.pass_entry.insert(0, "") # Temp password
         self.pass_entry.pack()
 
+        # create a user, will still have to log in
         tk.Button(root, text="Create", command=self.add_user, bg="#d9fdd3").pack()
 
+    # adds the new user to the database
     def add_user(self):
         conn = mysql.connector.connect(**self.db_config)
         self.cursor = conn.cursor()
@@ -83,6 +88,7 @@ class LoginWindow:
         except mysql.connector.Error as err:
             messagebox.showerror("Query Error", f"Error searching database:\n{err}")
 
+    # 
     def check_login(self):
 
         conn = mysql.connector.connect(**self.db_config)
@@ -94,7 +100,7 @@ class LoginWindow:
        # id = self.cursor.fetchone()
 
         query = "SELECT user_id FROM user WHERE username = %s AND password = %s"
-        cursor.execute(query, (username, password))
+        self.cursor.execute(query, (username, password))
 
         result = cursor.fecthone()
 
@@ -116,9 +122,9 @@ class GroceryApp:
         self.db_config = db_config
         self.root.title("Grocery Store Manager & Analytics")
         
-        # Window dimensions
-        window_width = 800
-        window_height = 700 # Increased height for new fields
+        # Window dimensions - made wider for food table
+        window_width = 1200
+        window_height = 900
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         x = int(screen_width / 2 - window_width / 2)
@@ -220,9 +226,7 @@ class GroceryApp:
     def search_stores(self):
         if not self.cursor: return
         zip_code = self.zip_entry.get().strip()
-        
         for i in self.tree.get_children(): self.tree.delete(i)
-        
         try:
             sql = "SELECT STORENAME, STORE_ADDRESS, zipcode FROM grocery_location WHERE zipcode = %s"
             self.cursor.execute(sql, (zip_code,))
@@ -239,26 +243,19 @@ class GroceryApp:
         name = self.new_name.get()
         addr = self.new_addr.get()
         zip_c = self.new_zip.get()
-
         if not name or not zip_c:
             messagebox.showwarning("Missing Data", "Name and Zip Code are required.")
             return
-
         try:
             obj_id = str(uuid.uuid4())
             sql = "INSERT INTO grocery_location (OBJECTID, STORENAME, STORE_ADDRESS, zipcode) VALUES (%s, %s, %s, %s)"
             self.cursor.execute(sql, (obj_id, name, addr, zip_c))
             self.conn.commit()
             messagebox.showinfo("Success", "Store added successfully!")
-            
-            # Clear fields
             self.new_name.delete(0, tk.END)
             self.new_addr.delete(0, tk.END)
             self.new_zip.delete(0, tk.END)
-            
-            # Refresh Analytics
             self.refresh_analytics()
-            
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", str(err))
 
@@ -288,35 +285,31 @@ class GroceryApp:
 
     def change_email(self):
         if not self.cursor: return
-
-        old_email_input = self.email_entry.get().strip()        # CHECK EMAIL ENTRY
+        old_email = self.email_entry.get().strip()
+        password = self.password_entry.get().strip()
         
-        if not old_email_input:
-            messagebox.showwarning("Input Error", "Please enter an email.")
+        if not old_email or not password:
+            messagebox.showwarning("Input Error", "Enter current email and password.")
             return
-
-        password_input = self.password_entry.get().strip()        # CHECK PASSWORD ENTRY
-        
-        if not password_input:
-            messagebox.showwarning("Input Error", "Please enter a password.")
-            return
-
-        new_email_input = self.email_entry.get().strip()        # CHECK EMAIL ENTRY
-        
-        if not new_email_input:
-            messagebox.showwarning("Input Error", "Please enter an email.")
-            return
-
-        # Clear previous results
-        for item in self.tree.get_children():
-            self.tree.delete(item)
+            
+        new_email = simpledialog.askstring("Update Email", "Enter new email address:")
+        if not new_email: return
 
         try:
-            self.cursor.execute("UPDATE user SET email = '"+new_email_input+"' WHERE email = '"+old_email_input+"' AND password_hash = '"+password_input+"'")
+            # FIX: Use parameterized query
+            sql = "UPDATE user SET email = %s WHERE email = %s AND password_hash = %s"
+            self.cursor.execute(sql, (new_email, old_email, password))
+            if self.cursor.rowcount > 0:
+                self.conn.commit()
+                messagebox.showinfo("Success", "Email updated.")
+            else:
+                messagebox.showwarning("Failed", "Invalid credentials or user not found.")
         except mysql.connector.Error as err:
-            messagebox.showerror("Database Error", f"Error adding user:\n{err}")
+            messagebox.showerror("Database Error", f"Error updating user:\n{err}")
 
-    # TAB 2: 
+    # ------------------------------------------------------------------
+    # TAB 2: FOOD DATABASE (NEW)
+    # ------------------------------------------------------------------
     def setup_food_tab(self):
         # Top Bar: Search & Actions
         top_frame = tk.Frame(self.tab2)
@@ -445,76 +438,134 @@ class GroceryApp:
     # TAB 3: ANALYTICS
     # ------------------------------------------------------------------
     def setup_analytics_tab(self):
-        tk.Button(self.tab3, text="Refresh Analytics", command=self.refresh_analytics).pack(pady=5)
-        self.charts_frame = tk.Frame(self.tab3)
-        self.charts_frame.pack(fill="both", expand=True)
-        self.canvas = tk.Canvas(self.charts_frame, bg="white")
-        self.canvas.pack(fill="both", expand=True, padx=10, pady=10)
+        # 1. Header with Refresh
+        control_frame = tk.Frame(self.tab3, bg="#f0f2f5")
+        control_frame.pack(fill="x", side="top")
+        
+        tk.Button(control_frame, text="Refresh Dashboard", command=self.refresh_analytics, 
+                  bg="#4a90e2", fg="black", font=("Arial", 10, "bold"), padx=10, pady=5).pack(pady=10)
+
+        # 2. Main Canvas for Dashboard
+        self.canvas = tk.Canvas(self.tab3, bg="#f0f2f5")
+        self.canvas.pack(fill="both", expand=True)
+        
         self.root.after(500, self.refresh_analytics)
+
+    def draw_card(self, x, y, w, h, title):
+        """Draws a white card background with shadow and title."""
+        # Shadow
+        self.canvas.create_rectangle(x+3, y+3, x+w+3, y+h+3, fill="#d1d1d1", outline="")
+        # Box
+        self.canvas.create_rectangle(x, y, x+w, y+h, fill="white", outline="#e1e4e8")
+        # Header Line
+        self.canvas.create_line(x, y+40, x+w, y+40, fill="#f0f0f0")
+        # Title
+        self.canvas.create_text(x+15, y+20, text=title, anchor="w", font=("Segoe UI", 12, "bold"), fill="#333")
+        
+        return x+10, y+50, w-20, h-60 # Returns the inner content area
 
     def refresh_analytics(self):
         if not self.cursor: return
         self.canvas.delete("all")
-        self.draw_summary_stats(50, 50)
-        self.draw_top_zips_chart(50, 200)
-        self.draw_health_chart(350, 200)   # NEW
-        self.draw_cal_chart(650, 200)     # NEW
+        
+        # Grid Layout Config
+        pad = 20
+        col1_x = pad
+        col2_x = pad + 520
+        
+        # Draw Cards
+        self.draw_summary_kpi(col1_x, pad)
+        self.draw_health_pie(col2_x, pad)
+        self.draw_top_zips_bar(col1_x, pad + 180)
+        self.draw_cal_bar(col2_x, pad + 180)
 
-    def draw_summary_stats(self, x, y):
+    def draw_summary_kpi(self, x, y):
+        cx, cy, cw, ch = self.draw_card(x, y, 500, 160, "Key Metrics")
+        
         try:
             self.cursor.execute("SELECT COUNT(*) FROM grocery_location")
             total_stores = self.cursor.fetchone()[0]
             self.cursor.execute("SELECT COUNT(*) FROM food")
             total_food = self.cursor.fetchone()[0]
-
-            self.canvas.create_text(x, y, text="View 1: Database Summary", font=("Arial", 12, "bold"), anchor="w")
-            self.canvas.create_text(x, y+30, text=f"Total Stores Tracked: {total_stores}", anchor="w", fill="blue")
-            self.canvas.create_text(x, y+50, text=f"Total Food Items: {total_food}", anchor="w", fill="green")
+            
+            # Draw KPI 1 (Stores)
+            self.canvas.create_text(cx + 80, cy + 30, text=str(total_stores), font=("Arial", 36, "bold"), fill="#3498db")
+            self.canvas.create_text(cx + 80, cy + 70, text="Total Stores", font=("Arial", 12), fill="#7f8c8d")
+            
+            # Separator
+            self.canvas.create_line(cx + 250, cy, cx + 250, cy + 100, fill="#eee")
+            
+            # Draw KPI 2 (Foods)
+            self.canvas.create_text(cx + 330, cy + 30, text=str(total_food), font=("Arial", 36, "bold"), fill="#27ae60")
+            self.canvas.create_text(cx + 330, cy + 70, text="Food Items", font=("Arial", 12), fill="#7f8c8d")
         except: pass
 
-    def draw_top_zips_chart(self, x, y):
-        self.canvas.create_text(x, y, text="View 2: Top Zips", font=("Arial", 11, "bold"), anchor="w")
+    def draw_health_pie(self, x, y):
+        cx, cy, cw, ch = self.draw_card(x, y, 500, 160, "Food Health Distribution")
+        
         try:
-            sql = "SELECT zipcode, COUNT(*) as cnt FROM grocery_location GROUP BY zipcode ORDER BY cnt DESC LIMIT 3"
-            self.cursor.execute(sql)
-            rows = self.cursor.fetchall()
-            start_y = y + 30
-            max_width = 150
-            if rows:
-                max_val = rows[0][1]
-                for i, (zip_c, count) in enumerate(rows):
-                    bar_w = (count / max_val) * max_width if max_val > 0 else 0
-                    self.canvas.create_rectangle(x, start_y, x + bar_w, start_y + 20, fill="#69b3a2", outline="white")
-                    self.canvas.create_text(x + bar_w + 5, start_y + 10, text=f"{zip_c} ({count})", anchor="w")
-                    start_y += 30
-        except: pass
+            self.cursor.execute("SELECT health_scale, COUNT(*) FROM nutrition GROUP BY health_scale")
+            data = self.cursor.fetchall() # [(Healthy, 10), (Unhealthy, 5)]
+            
+            total = sum([d[1] for d in data])
+            if total == 0: return
 
-    def draw_health_chart(self, x, y):
-        """Shows Count of Healthy vs Unhealthy foods."""
-        self.canvas.create_text(x, y, text="View 3: Food Health Scale", font=("Arial", 11, "bold"), anchor="w")
-        try:
-            sql = "SELECT health_scale, COUNT(*) FROM nutrition GROUP BY health_scale"
-            self.cursor.execute(sql)
-            rows = self.cursor.fetchall()
+            start_angle = 90
+            colors = {"Healthy": "#2ecc71", "Unhealthy": "#e74c3c", "Moderate": "#f1c40f"}
             
-            start_y = y + 30
-            max_width = 150
+            # Center of Pie
+            pc_x, pc_y = cx + 100, cy + 50
+            radius = 50
             
-            total = sum([r[1] for r in rows]) if rows else 1
+            legend_y = cy + 20
             
-            for scale, count in rows:
-                if not scale: scale = "Unknown"
-                bar_w = (count / total) * max_width
-                color = "#69b3a2" if scale == "Healthy" else "#ff9f43"
+            for category, count in data:
+                extent = (count / total) * 360
+                color = colors.get(category, "#95a5a6")
                 
-                self.canvas.create_rectangle(x, start_y, x + bar_w, start_y + 20, fill=color, outline="white")
-                self.canvas.create_text(x + bar_w + 5, start_y + 10, text=f"{scale} ({count})", anchor="w")
-                start_y += 30
+                # Draw Slice
+                self.canvas.create_arc(pc_x-radius, pc_y-radius, pc_x+radius, pc_y+radius,
+                                       start=start_angle, extent=extent, fill=color, outline="white")
+                
+                # Draw Legend
+                self.canvas.create_rectangle(cx + 200, legend_y, cx + 215, legend_y + 15, fill=color, outline="")
+                self.canvas.create_text(cx + 225, legend_y + 8, text=f"{category}: {count} ({int(extent/3.6)}%)", anchor="w", font=("Arial", 10))
+                legend_y += 25
+                
+                start_angle += extent
         except: pass
 
-    def draw_cal_chart(self, x, y):
-        """Shows Avg Calories by Category."""
-        self.canvas.create_text(x, y, text="View 4: Avg Calories", font=("Arial", 11, "bold"), anchor="w")
+    def draw_top_zips_bar(self, x, y):
+        cx, cy, cw, ch = self.draw_card(x, y, 500, 300, "Top 5 Zip Codes (Store Density)")
+        
+        try:
+            self.cursor.execute("SELECT zipcode, COUNT(*) as cnt FROM grocery_location GROUP BY zipcode ORDER BY cnt DESC LIMIT 5")
+            rows = self.cursor.fetchall()
+            if not rows: return
+            
+            max_val = rows[0][1]
+            bar_h = 30
+            gap = 15
+            current_y = cy + 10
+            
+            for zip_code, count in rows:
+                bar_w = (count / max_val) * (cw - 100)
+                
+                # Label
+                self.canvas.create_text(cx, current_y + 15, text=str(zip_code), anchor="w", font=("Arial", 10))
+                
+                # Bar
+                self.canvas.create_rectangle(cx + 60, current_y, cx + 60 + bar_w, current_y + bar_h, fill="#3498db", outline="")
+                
+                # Value Label
+                self.canvas.create_text(cx + 60 + bar_w + 10, current_y + 15, text=str(count), anchor="w", font=("Arial", 9, "bold"), fill="#555")
+                
+                current_y += bar_h + gap
+        except: pass
+
+    def draw_cal_bar(self, x, y):
+        cx, cy, cw, ch = self.draw_card(x, y, 500, 300, "Highest Calorie Categories")
+        
         try:
             sql = """
                 SELECT c.Category_Name, AVG(n.Energy_kcal) as avg_cal
@@ -527,16 +578,28 @@ class GroceryApp:
             """
             self.cursor.execute(sql)
             rows = self.cursor.fetchall()
+            if not rows: return
             
-            start_y = y + 30
-            max_width = 150
-            max_val = rows[0][1] if rows else 1
+            max_val = rows[0][1]
+            bar_width = 40
+            gap = 40
+            start_x = cx + 30
+            baseline_y = cy + 200
             
             for name, avg in rows:
-                bar_w = (avg / max_val) * max_width
-                self.canvas.create_rectangle(x, start_y, x + bar_w, start_y + 20, fill="#74b9ff", outline="white")
-                self.canvas.create_text(x + bar_w + 5, start_y + 10, text=f"{name[:10]}.. ({int(avg)})", anchor="w")
-                start_y += 30
+                bar_height = (avg / max_val) * 180
+                
+                # Bar
+                self.canvas.create_rectangle(start_x, baseline_y - bar_height, start_x + bar_width, baseline_y, fill="#e67e22", outline="")
+                
+                # Value on top
+                self.canvas.create_text(start_x + bar_width/2, baseline_y - bar_height - 10, text=str(int(avg)), font=("Arial", 9, "bold"))
+                
+                # Label below (truncated)
+                label = name[:8] + ".." if len(name) > 8 else name
+                self.canvas.create_text(start_x + bar_width/2, baseline_y + 15, text=label, font=("Arial", 8))
+                
+                start_x += bar_width + gap
         except: pass
 
 if __name__ == "__main__":
