@@ -234,7 +234,7 @@ class GroceryApp:
     def add_user(self):
         # 1. Get input
         email = self.email_entry.get().strip()
-        password = self.password_entry.get().strip() # Note: renamed to match your code
+        password = self.password_entry.get().strip() 
         
         if not email or not password:
             messagebox.showwarning("Input Error", "Please enter an email and password.")
@@ -248,10 +248,6 @@ class GroceryApp:
                 messagebox.showerror("Error", "User already exists.")
                 return
 
-            # 3. Insert NEW user (Let MySQL generate user_id automatically)
-            # REMOVED: uid = str(uuid.uuid4()) 
-            # REMOVED: user_id from the INSERT columns
-            
             sql = "INSERT INTO user (email, password_hash, created_at, stat) VALUES (%s, %s, %s, %s)"
             self.cursor.execute(sql, (email, password, datetime.now(), "Active"))
             
@@ -297,8 +293,7 @@ class GroceryApp:
         if not new_email: return # User cancelled
         
         try:
-            # 3. Update the database
-            # We look for a user that matches the CURRENT email/pass, and set their email to the NEW one.
+
             sql = "UPDATE user SET email = %s WHERE email = %s AND password_hash = %s"
             self.cursor.execute(sql, (new_email, current_email, current_password))
             
@@ -489,7 +484,6 @@ class GroceryApp:
         # 1. Ensure we are reading fresh data
         self.conn.commit()
         
-        # REMOVED: try/except block so we can see errors!
         sql = """
             SELECT c.Category_Name, AVG(n.Energy_kcal) as avg_cal
             FROM food f

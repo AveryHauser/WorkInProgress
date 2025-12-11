@@ -16,7 +16,6 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 def get_db_connection():
     try:
-        # Create Database if missing
         conn = mysql.connector.connect(
             user=db_config['user'], 
             password=db_config['password'], 
@@ -251,8 +250,6 @@ def populate_locations(cursor):
     for row in rows:
         if count > 100: break
         try:
-            # Note: Your SQL schema for grocery_location has 'OBJECTID' as int auto_increment
-            # We can let MySQL handle it, or insert it if provided.
             cursor.execute(
                 "INSERT INTO grocery_location (STORENAME, STORE_ADDRESS, zipcode) VALUES (%s, %s, %s)",
                 (row.get('STORENAME'), row.get('ADDRESS') or row.get('STORE_ADDRESS'), row.get('ZIPCODE'))
