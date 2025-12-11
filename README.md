@@ -38,3 +38,6 @@ source venv/bin/activate
 python populate_db.py
 python main.py
 ```
+The creditionals for tests are as follows
+email: guest@test.com
+password: pass

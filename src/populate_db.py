@@ -280,12 +280,12 @@ def populate_users_and_reviews(cursor):
     print("Populating Users & Reviews...")
     
     # Only create a user if one doesn't exist
-    cursor.execute("SELECT user_id FROM user WHERE email = 'admin@test.com'")
+    cursor.execute("SELECT user_id FROM user WHERE email = 'guest@test.com'")
     if not cursor.fetchone():
         cursor.execute("INSERT INTO user (email, password_hash, stat) VALUES (%s, %s, %s)", 
-                       ("admin@test.com", "pass", "active"))
+                       ("guest@test.com", "pass", "active"))
         user_id = cursor.lastrowid
-        cursor.execute("INSERT INTO user_profile (user_id, display_name) VALUES (%s, %s)", (user_id, "Admin"))
+        cursor.execute("INSERT INTO user_profile (user_id, display_name) VALUES (%s, %s)", (user_id, "Guest"))
         
         # Add a few dummy reviews just so the table isn't empty (as per requirement)
         cursor.execute("SELECT Food_Item_ID FROM food LIMIT 10")
@@ -297,9 +297,9 @@ def populate_users_and_reviews(cursor):
                     INSERT INTO user_review (user_id, Food_Item_ID, rating, comment, created_at)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (user_id, fid, 5, "Sample Data Review", datetime.now()))
-            print("  -> Admin user and initial reviews created.")
+            print("  -> guest user and initial reviews created.")
     else:
-        print("  -> Admin user already exists.")
+        print("  -> guest user already exists.")
 
 def main():
     conn = get_db_connection()
